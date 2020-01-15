@@ -1,0 +1,60 @@
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {MatSort} from '@angular/material/sort';
+import {MatTableDataSource} from '@angular/material/table';
+import { Stock } from './shared/stock.model';
+import { StockService } from './shared/stock.service';
+import { SaveService } from './shared/save.service';
+
+/**
+ * @title Table with sorting
+ */
+@Component({
+  selector: 'portfolio',
+  styleUrls: ['portfolio.css'],
+  templateUrl: 'portfolio.html',
+})
+export class TableSortingExample implements OnInit {
+  displayedColumns: string[] = ['symbol', 'price', 'size', 'time'];
+  dataSource: MatTableDataSource<Stock> = new MatTableDataSource([]);
+  searchStockSymbol: string = '';
+  stocks: Stock[] = [];
+
+  @ViewChild(MatSort, {static: true}) sort: MatSort;
+
+  constructor(private stockService: StockService, private saveService: SaveService) {}
+
+  ngOnInit() {
+    this.stockService.getStocks(this.saveService.getSavedStockSymbols()).subscribe((data: Array<any>) => {
+      this.appendData(data);
+    }, err => console.log(err));
+  }
+
+  appendData(data: Array<any>) {
+    data.forEach((elem: any) => {
+      const found = this.stocks.find(stock => stock.symbol === elem.symbol);
+      if (found)
+        console.log('already exists');
+      else
+        this.stocks.push(new Stock(elem));
+    });
+    this.dataSource = new MatTableDataSource(this.stocks);
+    this.dataSource.sort = this.sort;
+
+    this.saveService.saveStockSymbols(this.stocks.map((stock: Stock) => stock.symbol));
+  }
+
+  onSearch() {
+    if (this.searchStockSymbol.length === 0) return;
+
+    const symbols = this.searchStockSymbol.split(/[,.\s]/);
+
+    this.stockService.getStocks(symbols).subscribe((data: Array<any>) => {
+      this.appendData(data);
+    }, err => console.log(err));
+  }
+}
+
+
+/**  Copyright 2019 Google LLC. All Rights Reserved.
+    Use of this source code is governed by an MIT-style license that
+    can be found in the LICENSE file at http://angular.io/license */
