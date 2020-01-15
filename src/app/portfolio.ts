@@ -14,7 +14,7 @@ import { SaveService } from './shared/save.service';
   templateUrl: 'portfolio.html',
 })
 export class TableSortingExample implements OnInit {
-  displayedColumns: string[] = ['symbol', 'price', 'size', 'time'];
+  displayedColumns: string[] = ['symbol', 'price', 'size', 'time', 'delete'];
   dataSource: MatTableDataSource<Stock> = new MatTableDataSource([]);
   searchStockSymbol: string = '';
   stocks: Stock[] = [];
@@ -37,9 +37,16 @@ export class TableSortingExample implements OnInit {
       else
         this.stocks.push(new Stock(elem));
     });
+    this.updateTable();
+    this.updateDatabase();
+  }
+
+  updateTable() {
     this.dataSource = new MatTableDataSource(this.stocks);
     this.dataSource.sort = this.sort;
+  }
 
+  updateDatabase() {
     this.saveService.saveStockSymbols(this.stocks.map((stock: Stock) => stock.symbol));
   }
 
@@ -51,6 +58,12 @@ export class TableSortingExample implements OnInit {
     this.stockService.getStocks(symbols).subscribe((data: Array<any>) => {
       this.appendData(data);
     }, err => console.log(err));
+  }
+
+  onDelete(symbol: string) {
+    this.stocks = this.stocks.filter((stock: Stock) => stock.symbol !== symbol);
+    this.updateTable();
+    this.updateDatabase();
   }
 }
 
